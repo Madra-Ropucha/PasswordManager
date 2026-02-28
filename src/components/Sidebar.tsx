@@ -271,7 +271,7 @@ export function Sidebar({
 
   return (
     <aside className="sidebar">
-      <div style={{ position: 'sticky', top: 0, zIndex: 10, background: '#fafafa', padding: '8px 0' }}>              <div className="brand">📓 Libreta</div>
+      <div style={{ position: 'sticky', top: 0, zIndex: 10, background: '#fafafa', padding: '20px 0 8px 0' }}>              <div className="brand">📓 Libreta</div>
 
         <div className="sidebarTools" aria-label="Acciones">
 
