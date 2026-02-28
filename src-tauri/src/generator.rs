@@ -6,29 +6,6 @@ const LOWERCASE: &[u8] = b"abcdefghijklmnopqrstuvwxyz";
 const UPPERCASE: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const NUMBERS: &[u8] = b"0123456789";
 const SYMBOLS: &[u8] = b"!@#$%^&*()-_=+[]{}<>?";
- 
-
-fn build_charset(options: &PasswordOptions) -> String {
-    let mut charset = String::new();
-
-    if options.lowercase {
-        charset.push_str(LOWERCASE);
-    }
-
-    if options.uppercase {
-        charset.push_str(UPPERCASE);
-    }
-
-    if options.numbers {
-        charset.push_str(NUMBERS);
-    }
-
-    if options.symbols {
-        charset.push_str(SYMBOLS);
-    }
-
-    charset
-}
 
 pub fn generate_password(options: &PasswordOptions) -> Result<String, String> {
     let mut rng = OsRng;

@@ -3,7 +3,7 @@ use reqwest::blocking::get;
 use std::collections::HashMap;
 
 pub struct BreachChecker {
-    cache: HashMap<String, Vec<(String, u32)>>,
+    cache: HashMap<String, HashMap<String, u32>>
 }
 
 impl BreachChecker {

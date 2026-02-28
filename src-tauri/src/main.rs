@@ -7,7 +7,7 @@ use generator::{generate_password, PasswordOptions};
 use breach_check::BreachChecker;
 
 fn main() {
-    passwordmanager_lib::run()
+    passwordmanager_lib::run();
     // 1️⃣ Crear opciones de contraseña
     let options = PasswordOptions {
         length: 16,
