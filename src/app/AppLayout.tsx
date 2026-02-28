@@ -5,14 +5,18 @@ import { SearchBar } from "../components/SearchBar";
 import { EntryGrid } from "../components/EntryGrid";
 import { NotebookModal } from "../components/NotebookModal";
 import { CreateItemModal, type CreateItemState } from "../components/CreateItemModal";
+import { tauriInvoke } from "../tauri/api";
 
 const LS_CATEGORIES_LEGACY = "notebook_categories_v1";
 const LS_ENTRIES_LEGACY = "notebook_entries_v1";
 
+const KV_CATEGORIES = "notebook_categories_v1";
+const KV_ENTRIES = "notebook_entries_v1";
+
 const defaultCategories: Category[] = [{ id: "general", name: "General" }];
 const defaultEntries: Entry[] = [];
 
-function safeLoad<T>(key: string): T | null {
+function safeLoadLocal<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
@@ -22,16 +26,15 @@ function safeLoad<T>(key: string): T | null {
   }
 }
 
-function safeSave(key: string, value: unknown) {
+function safeRemoveLocal(key: string) {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.removeItem(key);
   } catch {
-    // sin-op (si el storage está lleno o bloqueado, la app sigue funcionando)
+    // noop
   }
 }
 
 function newId(prefix: string) {
-  // @ts-expect-error - crypto puede no existir en algunos entornos
   const uuid = typeof crypto !== "undefined" && crypto?.randomUUID ? crypto.randomUUID() : null;
   return uuid ?? `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now()}`;
 }
@@ -56,74 +59,99 @@ function collectDescendants(categories: { id: string; parentId?: string }[], roo
   return out;
 }
 
+async function kvGetJson<T>(key: string): Promise<T | null> {
+  const raw = await tauriInvoke<string | null>("cmd_kv_get", { key });
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function kvSetJson(key: string, value: unknown): Promise<void> {
+  const raw = JSON.stringify(value);
+  await tauriInvoke<void>("cmd_kv_set", { key, value: raw });
+}
+
 type Props = {
-  userId: string;
-  userName: string;
+  vaultName: string;
   onLogout: () => void;
+  logoutDisabled?: boolean;
 };
 
-function userCatsKey(userId: string) {
-  return `notebook_categories_v1_${userId}`;
-}
+export function AppLayout({ vaultName, onLogout, logoutDisabled }: Props) {
+  const [loading, setLoading] = useState(true);
 
-function userEntriesKey(userId: string) {
-  return `notebook_entries_v1_${userId}`;
-}
+  const [categories, setCategories] = useState<Category[]>(defaultCategories);
+  const [entries, setEntries] = useState<Entry[]>(defaultEntries);
 
-function bootstrapUserData(userId: string): { categories: Category[]; entries: Entry[] } {
-  const catsKey = userCatsKey(userId);
-  const entriesKey = userEntriesKey(userId);
-
-  let categories = safeLoad<Category[]>(catsKey);
-  let entries = safeLoad<Entry[]>(entriesKey);
-
-  // Migración suave desde la versión sin usuarios (si el usuario aún no tiene datos)
-  if (!categories) {
-    const legacyCats = safeLoad<Category[]>(LS_CATEGORIES_LEGACY);
-    if (legacyCats && legacyCats.length > 0) {
-      categories = legacyCats;
-      safeSave(catsKey, categories);
-    }
-  }
-  if (!entries) {
-    const legacyEntries = safeLoad<Entry[]>(LS_ENTRIES_LEGACY);
-    if (legacyEntries && legacyEntries.length >= 0) {
-      entries = legacyEntries;
-      safeSave(entriesKey, entries);
-    }
-  }
-
-  // Si sigue sin haber nada, inicializamos limpio
-  if (!categories || categories.length === 0) categories = defaultCategories;
-  if (!entries) entries = defaultEntries;
-
-  return { categories, entries };
-}
-
-export function AppLayout({ userId, userName, onLogout }: Props) {
-  const boot = useMemo(() => bootstrapUserData(userId), [userId]);
-
-  const [categories, setCategories] = useState<Category[]>(boot.categories);
-  const [entries, setEntries] = useState<Entry[]>(boot.entries);
-
-  // Elige como categoría inicial la primera que tenga entradas (o la primera disponible)
-  const [activeCategoryId, setActiveCategoryId] = useState(() => {
-    const idsWithEntries = new Set(boot.entries.map((e) => e.categoryId));
-    return boot.categories.find((c) => idsWithEntries.has(c.id))?.id ?? boot.categories[0].id;
-  });
+  const [activeCategoryId, setActiveCategoryId] = useState(defaultCategories[0].id);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-
   const [createState, setCreateState] = useState<CreateItemState | null>(null);
 
-  // Persistencia local (para que no se pierda al recargar)
+  // Carga inicial desde el vault (tabla kv). Si está vacío, migramos desde localStorage (si existe).
   useEffect(() => {
-    safeSave(userCatsKey(userId), categories);
-  }, [categories, userId]);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        let cats = await kvGetJson<Category[]>(KV_CATEGORIES);
+        let ents = await kvGetJson<Entry[]>(KV_ENTRIES);
+
+        // Migración suave desde localStorage (si el vault está vacío)
+        if (!cats) {
+          const legacyCats = safeLoadLocal<Category[]>(LS_CATEGORIES_LEGACY);
+          if (legacyCats && legacyCats.length > 0) {
+            cats = legacyCats;
+            await kvSetJson(KV_CATEGORIES, cats);
+            safeRemoveLocal(LS_CATEGORIES_LEGACY);
+          }
+        }
+        if (!ents) {
+          const legacyEntries = safeLoadLocal<Entry[]>(LS_ENTRIES_LEGACY);
+          if (legacyEntries && legacyEntries.length >= 0) {
+            ents = legacyEntries;
+            await kvSetJson(KV_ENTRIES, legacyEntries);
+            safeRemoveLocal(LS_ENTRIES_LEGACY);
+          }
+        }
+
+        if (!cats || cats.length === 0) cats = defaultCategories;
+        if (!ents) ents = defaultEntries;
+
+        if (cancelled) return;
+        setCategories(cats);
+        setEntries(ents);
+
+        const idsWithEntries = new Set(ents.map((e) => e.categoryId));
+        const initialActive = cats.find((c) => idsWithEntries.has(c.id))?.id ?? cats[0].id;
+        setActiveCategoryId(initialActive);
+        setSelectedEntryId(null);
+        setSearch("");
+      } catch (e) {
+        if (!cancelled) window.alert((e as Error).message ?? String(e));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [vaultName]);
+
+  // Persistencia dentro del vault
+  useEffect(() => {
+    if (loading) return;
+    void kvSetJson(KV_CATEGORIES, categories);
+  }, [categories, loading]);
 
   useEffect(() => {
-    safeSave(userEntriesKey(userId), entries);
-  }, [entries, userId]);
+    if (loading) return;
+    void kvSetJson(KV_ENTRIES, entries);
+  }, [entries, loading]);
 
   // Todas las entradas de la categoría activa (para las pestañas del modal)
   const entriesInCategory = useMemo(() => {
@@ -147,7 +175,6 @@ export function AppLayout({ userId, userName, onLogout }: Props) {
     return entries.find((e) => e.id === selectedEntryId) ?? null;
   }, [entries, selectedEntryId]);
 
-  // PASO 3: sacar el nombre de la categoría activa (para el título de la libreta)
   const activeCategory = useMemo(() => {
     return categories.find((c) => c.id === activeCategoryId);
   }, [categories, activeCategoryId]);
@@ -156,10 +183,7 @@ export function AppLayout({ userId, userName, onLogout }: Props) {
     const trimmed = name.trim();
     if (!trimmed) return null;
     const id = newId("cat");
-    setCategories((prev) => {
-      const next = [...prev, { id, name: trimmed, ...(parentId ? { parentId } : {}) }];
-      return next;
-    });
+    setCategories((prev) => [...prev, { id, name: trimmed, ...(parentId ? { parentId } : {}) }]);
     return id;
   };
 
@@ -174,7 +198,6 @@ export function AppLayout({ userId, userName, onLogout }: Props) {
       return;
     }
 
-    // Si la categoría activa o la seleccionada desaparecen, elegimos un fallback
     const fallbackCategoryId = cat.parentId ?? remaining[0].id;
 
     setCategories((prev) => prev.filter((c) => !allIds.includes(c.id)));
@@ -215,7 +238,6 @@ export function AppLayout({ userId, userName, onLogout }: Props) {
     };
     setEntries((prev) => [...prev, entry]);
 
-    // UX: al crear un post-it, lo seleccionamos y abrimos la libreta
     setActiveCategoryId(payload.categoryId);
     setSelectedEntryId(id);
   };
@@ -224,6 +246,17 @@ export function AppLayout({ userId, userName, onLogout }: Props) {
     setEntries((prev) => prev.filter((e) => e.id !== entryId));
     if (selectedEntryId === entryId) setSelectedEntryId(null);
   };
+
+  if (loading) {
+    return (
+      <div className="authPage">
+        <div className="authCard">
+          <div className="authBrand">🔓 Abriendo vault…</div>
+          <div className="authFootnote">Cargando datos cifrados…</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -258,10 +291,10 @@ export function AppLayout({ userId, userName, onLogout }: Props) {
           <div className="headerRow">
             <SearchBar value={search} onChange={setSearch} />
             <div className="headerUser">
-              <span className="headerUserName" title={userName}>
-                👤 {userName}
+              <span className="headerUserName" title={vaultName}>
+                👤 {vaultName}
               </span>
-              <button className="btn" type="button" onClick={onLogout}>
+              <button className="btn" type="button" onClick={onLogout} disabled={logoutDisabled}>
                 Salir
               </button>
             </div>

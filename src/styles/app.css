@@ -411,8 +411,6 @@ body {
   border-color:#bdbdbd;
   background:#f2f2f2;
 }
-
-
 /* Portada de la libreta (vista de selección) */
 .notebookCoverPage{
   position:absolute;
@@ -448,7 +446,6 @@ body {
   color: #2b1a0c;
 }
 
-/* Subtítulo opcional */
 .notebookCoverPageSub{
   font-size: 12px;
   letter-spacing: .18em;
@@ -683,7 +680,6 @@ body {
   max-height: calc(100% - 110px);
   overflow:auto;
 }
-
 /* Post-it tipo pestaña */
 .edgePostit{
   position: relative;

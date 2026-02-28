@@ -1,58 +1,32 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { AppLayout } from "../app/AppLayout";
-import type { User } from "../models/types";
-
-const LS_USERS = "notebook_users_v1";
-const LS_SESSION = "notebook_session_v1";
-
-type Session = { userId: string };
-
-function safeLoad<T>(key: string): T | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
-}
-
-function safeSave(key: string, value: unknown) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // noop
-  }
-}
-
-function safeRemove(key: string) {
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    // noop
-  }
-}
-
-function newId(prefix: string) {
-  // @ts-expect-error - crypto puede no existir en algunos entornos
-  const uuid = typeof crypto !== "undefined" && crypto?.randomUUID ? crypto.randomUUID() : null;
-  return uuid ?? `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now()}`;
-}
-
-function normalizeUser(u: string) {
-  return u.trim().toLowerCase();
-}
+import { tauriInvoke } from "../tauri/api";
 
 type AuthMode = "login" | "signup";
+
+function sanitizeVaultName(raw: string) {
+  const s = raw.trim();
+  const out: string[] = [];
+  for (const ch of s) {
+    if ((ch >= "a" && ch <= "z") || (ch >= "A" && ch <= "Z") || (ch >= "0" && ch <= "9") || ch === "-" || ch === "_") {
+      out.push(ch);
+    } else if (ch === " " || ch === "\t" || ch === "\n") {
+      out.push("_");
+    }
+  }
+  const finalName = out.join("").replace(/^_+|_+$/g, "");
+  return finalName;
+}
 
 function AuthCard({ children }: { children: ReactNode }) {
   return (
     <div className="authPage">
       <div className="authCard">
-        <div className="authBrand">📓 Libreta</div>
+        <div className="authBrand">🔐 PasswordManager</div>
         {children}
         <div className="authFootnote">
-          *Demo local: los usuarios se guardan en tu navegador (localStorage).
+          Usuarios = vaults (bases de datos cifradas) dentro de <span className="mono">app_data/vaults</span>. La contraseña
+          no se guarda: el login consiste en descifrar el vault.
         </div>
       </div>
     </div>
@@ -60,31 +34,34 @@ function AuthCard({ children }: { children: ReactNode }) {
 }
 
 function LoginPage({
-  users,
+  vaults,
   onLogin,
   onGoSignup,
 }: {
-  users: User[];
-  onLogin: (userId: string) => void;
+  vaults: string[];
+  onLogin: (vaultName: string, password: string) => void;
   onGoSignup: () => void;
 }) {
-  const [username, setUsername] = useState("");
+  const [vault, setVault] = useState(() => vaults[0] ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!vault && vaults[0]) setVault(vaults[0]);
+  }, [vaults, vault]);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    const u = users.find((x) => normalizeUser(x.username) === normalizeUser(username));
-    if (!u) {
-      setError("Ese usuario no existe.");
+    if (!vault) {
+      setError("No hay ningún vault seleccionado.");
       return;
     }
-    if (u.password !== password) {
-      setError("Contraseña incorrecta.");
+    if (!password) {
+      setError("La contraseña es obligatoria.");
       return;
     }
-    onLogin(u.id);
+    onLogin(vault, password);
   };
 
   return (
@@ -93,15 +70,14 @@ function LoginPage({
 
       <form onSubmit={submit} className="authForm">
         <label className="field">
-          <span className="fieldLabel">Usuario</span>
-          <input
-            className="fieldInput"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Tu usuario"
-            autoFocus
-            autoComplete="username"
-          />
+          <span className="fieldLabel">Vault</span>
+          <select className="fieldInput" value={vault} onChange={(e) => setVault(e.target.value)}>
+            {vaults.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="field">
@@ -110,7 +86,7 @@ function LoginPage({
             className="fieldInput"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Tu contraseña"
+            placeholder="Contraseña del vault"
             type="password"
             autoComplete="current-password"
           />
@@ -120,7 +96,7 @@ function LoginPage({
 
         <div className="authActions">
           <button className="btn" type="button" onClick={onGoSignup}>
-            Crear cuenta
+            Crear vault
           </button>
           <button className="btn btnPrimary" type="submit">
             Entrar
@@ -132,30 +108,26 @@ function LoginPage({
 }
 
 function SignupPage({
-  users,
   onSignup,
   onGoLogin,
 }: {
-  users: User[];
-  onSignup: (payload: { username: string; password: string }) => void;
+  onSignup: (vaultName: string, password: string) => void;
   onGoLogin: () => void;
 }) {
-  const [username, setUsername] = useState("");
+  const [vaultName, setVaultName] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const normalized = useMemo(() => sanitizeVaultName(vaultName), [vaultName]);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    const u = username.trim();
-    if (!u) {
-      setError("El usuario es obligatorio.");
-      return;
-    }
-    if (users.some((x) => normalizeUser(x.username) === normalizeUser(u))) {
-      setError("Ese usuario ya existe.");
+    const name = sanitizeVaultName(vaultName);
+    if (!name) {
+      setError("El nombre del vault es obligatorio (solo letras/números/ - _ ).");
       return;
     }
     if (!password) {
@@ -166,26 +138,30 @@ function SignupPage({
       setError("Las contraseñas no coinciden.");
       return;
     }
-
-    onSignup({ username: u, password });
+    onSignup(name, password);
   };
 
   return (
     <AuthCard>
-      <div className="authTitle">Crear cuenta</div>
+      <div className="authTitle">Crear vault (Sign up)</div>
 
       <form onSubmit={submit} className="authForm">
         <label className="field">
-          <span className="fieldLabel">Usuario</span>
+          <span className="fieldLabel">Nombre del vault</span>
           <input
             className="fieldInput"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Elige un usuario"
+            value={vaultName}
+            onChange={(e) => setVaultName(e.target.value)}
+            placeholder="Ej: UDC, Personal, Trabajo..."
             autoFocus
-            autoComplete="username"
           />
         </label>
+
+        {vaultName.trim() && normalized && normalized !== vaultName.trim() && (
+          <div className="authFootnote">
+            Se guardará como: <span className="mono">{normalized}</span>
+          </div>
+        )}
 
         <label className="field">
           <span className="fieldLabel">Contraseña</span>
@@ -193,7 +169,7 @@ function SignupPage({
             className="fieldInput"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Crea una contraseña"
+            placeholder="Contraseña del vault"
             type="password"
             autoComplete="new-password"
           />
@@ -215,7 +191,7 @@ function SignupPage({
 
         <div className="authActions">
           <button className="btn" type="button" onClick={onGoLogin}>
-            Ya tengo cuenta
+            Ya tengo vault
           </button>
           <button className="btn btnPrimary" type="submit">
             Crear y entrar
@@ -227,50 +203,52 @@ function SignupPage({
 }
 
 export function AuthGate() {
-  const [users, setUsers] = useState<User[]>(() => safeLoad<User[]>(LS_USERS) ?? []);
-  const [mode, setMode] = useState<AuthMode>(() => {
-    const existing = safeLoad<User[]>(LS_USERS) ?? [];
-    return existing.length > 0 ? "login" : "signup";
-  });
+  const [vaults, setVaults] = useState<string[]>([]);
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [loggedVault, setLoggedVault] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [fatal, setFatal] = useState<string | null>(null);
 
-  const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
-    const session = safeLoad<Session>(LS_SESSION);
-    const existing = safeLoad<User[]>(LS_USERS) ?? [];
-    if (session?.userId && existing.some((u) => u.id === session.userId)) return session.userId;
-    return null;
-  });
+  const refresh = async () => {
+    const v = await tauriInvoke<string[]>("cmd_list_vaults");
+    setVaults(v);
+    setMode(v.length > 0 ? "login" : "signup");
+  };
 
-  // Persistimos usuarios
   useEffect(() => {
-    safeSave(LS_USERS, users);
-  }, [users]);
+    (async () => {
+      try {
+        await refresh();
+      } catch (e) {
+        setFatal((e as Error).message ?? String(e));
+      }
+    })();
+  }, []);
 
-  // Persistimos sesión (o la borramos)
-  useEffect(() => {
-    if (currentUserId) safeSave(LS_SESSION, { userId: currentUserId } as Session);
-    else safeRemove(LS_SESSION);
-  }, [currentUserId]);
+  if (fatal) {
+    return (
+      <AuthCard>
+        <div className="authTitle">Error</div>
+        <div className="authError">{fatal}</div>
+      </AuthCard>
+    );
+  }
 
-  // Si cambia el número de usuarios y NO hay sesión, ajustamos el modo inicial
-  useEffect(() => {
-    if (currentUserId) return;
-    setMode(users.length > 0 ? "login" : "signup");
-  }, [users.length, currentUserId]);
-
-  const currentUser = useMemo(() => {
-    if (!currentUserId) return null;
-    return users.find((u) => u.id === currentUserId) ?? null;
-  }, [users, currentUserId]);
-
-  if (currentUser) {
+  if (loggedVault) {
     return (
       <AppLayout
-        userId={currentUser.id}
-        userName={currentUser.username}
-        onLogout={() => {
-          setCurrentUserId(null);
-          setMode(users.length > 0 ? "login" : "signup");
+        vaultName={loggedVault}
+        onLogout={async () => {
+          try {
+            setBusy(true);
+            await tauriInvoke<void>("cmd_close_vault");
+          } finally {
+            setBusy(false);
+            setLoggedVault(null);
+            await refresh();
+          }
         }}
+        logoutDisabled={busy}
       />
     );
   }
@@ -278,22 +256,41 @@ export function AuthGate() {
   if (mode === "login") {
     return (
       <LoginPage
-        users={users}
-        onLogin={(userId) => setCurrentUserId(userId)}
+        vaults={vaults}
         onGoSignup={() => setMode("signup")}
+        onLogin={async (vaultName, password) => {
+          try {
+            setBusy(true);
+            await tauriInvoke<void>("cmd_open_vault", { vaultName, password });
+            setLoggedVault(vaultName);
+          } catch (e) {
+            // Devolvemos el error al usuario dentro de la propia pantalla:
+            // (lo hacemos con un alert simple para no complicar la UI)
+            window.alert((e as Error).message ?? String(e));
+          } finally {
+            setBusy(false);
+          }
+        }}
       />
     );
   }
 
   return (
     <SignupPage
-      users={users}
-      onSignup={({ username, password }) => {
-        const user: User = { id: newId("u"), username, password, createdAt: Date.now() };
-        setUsers((prev) => [...prev, user]);
-        setCurrentUserId(user.id);
-      }}
       onGoLogin={() => setMode("login")}
+      onSignup={async (vaultName, password) => {
+        try {
+          setBusy(true);
+          await tauriInvoke<void>("cmd_create_vault", { vaultName, password });
+          await refresh();
+          await tauriInvoke<void>("cmd_open_vault", { vaultName, password });
+          setLoggedVault(vaultName);
+        } catch (e) {
+          window.alert((e as Error).message ?? String(e));
+        } finally {
+          setBusy(false);
+        }
+      }}
     />
   );
 }

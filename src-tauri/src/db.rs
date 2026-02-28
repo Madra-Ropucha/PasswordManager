@@ -1,5 +1,5 @@
-use rusqlite::Connection;
 use rusqlite::{Connection, Row};
+use rusqlite::OptionalExtension;
 use serde::{Serialize, Deserialize};
 
 // Structs
@@ -50,9 +50,6 @@ pub fn init_db(db_path: &str) -> Result<(), String> {
     conn.execute_batch("
         PRAGMA foreign_keys = ON;
 
-        DROP TABLE IF EXISTS password;
-        DROP TABLE IF EXISTS folder;
-
         CREATE TABLE IF NOT EXISTS folder (
             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             name TEXT NOT NULL,
@@ -71,8 +68,33 @@ pub fn init_db(db_path: &str) -> Result<(), String> {
             deletedOn TEXT,
             FOREIGN KEY (fatherId) REFERENCES folder(id) ON DELETE SET NULL
         );
+
+        CREATE TABLE IF NOT EXISTS kv (
+            key TEXT PRIMARY KEY NOT NULL,
+            value TEXT NOT NULL
+        );
     ").map_err(|e| e.to_string())?;
 
+    Ok(())
+}
+
+// KV helpers (para guardar JSON de la UI dentro del vault)
+pub fn kv_get(conn: &Connection, key: &str) -> Result<Option<String>, String> {
+    conn.query_row(
+        "SELECT value FROM kv WHERE key = ?1",
+        [key],
+        |row| row.get::<_, String>(0),
+    )
+    .optional()
+    .map_err(|e| e.to_string())
+}
+
+pub fn kv_set(conn: &Connection, key: &str, value: &str) -> Result<(), String> {
+    conn.execute(
+        "INSERT INTO kv (key, value) VALUES (?1, ?2)\n         ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (key, value),
+    )
+    .map_err(|e| e.to_string())?;
     Ok(())
 }
 
