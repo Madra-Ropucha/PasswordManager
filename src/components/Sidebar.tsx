@@ -271,33 +271,35 @@ export function Sidebar({
 
   return (
     <aside className="sidebar">
-      <div className="brand">📓 Libreta</div>
+      <div style={{ position: 'sticky', top: 0, zIndex: 10, background: '#fafafa', padding: '8px 0' }}>              <div className="brand">📓 Libreta</div>
 
-      <div className="sidebarTools" aria-label="Acciones">
-        <button className="toolBtn" type="button" onClick={onCreateCategory} title="Nueva carpeta">
-          ＋ Carpeta
-        </button>
-        <button className="toolBtn" type="button" onClick={onCreateEntry} title="Nuevo post-it">
-          ＋ Post-it
-        </button>
-        <button className="toolBtn" type="button" onClick={onDeleteCategory} title="Borrar carpeta">
-          🗑 Carpeta
-        </button>
-        <button
-          className={"toolBtn " + (!selectedEntryId ? "toolBtnDisabled" : "")}
-          type="button"
-          onClick={onDeleteEntry}
-          disabled={!selectedEntryId}
-          title={selectedEntryId ? "Borrar post-it" : "Selecciona un post-it para borrarlo"}
-        >
-          🗑 Post-it
-        </button>
-      </div>
+        <div className="sidebarTools" aria-label="Acciones">
 
-      <div className="sectionTitle">Categorías</div>
-      <div className="tree" role="tree" aria-label="Categorías">
-        {tree.map((n) => renderNode(n, 0))}
+
+          <button className="toolBtn" type="button" onClick={onCreateCategory} title="Nueva carpeta">
+            ＋ Carpeta
+          </button>
+          <button className="toolBtn" type="button" onClick={onCreateEntry} title="Nuevo post-it">
+            ＋ Post-it
+          </button>
+          <button className="toolBtn" type="button" onClick={onDeleteCategory} title="Borrar carpeta">
+            🗑 Carpeta
+          </button>
+          <button
+            className={"toolBtn " + (!selectedEntryId ? "toolBtnDisabled" : "")}
+            type="button"
+            onClick={onDeleteEntry}
+            disabled={!selectedEntryId}
+            title={selectedEntryId ? "Borrar post-it" : "Selecciona un post-it para borrarlo"}
+          >
+            🗑 Post-it
+          </button>
+        </div>
+
+        <div className="sectionTitle">Categorías</div>
+        <div className="tree" role="tree" aria-label="Categorías"></div>
       </div>
+      {tree.map((n) => renderNode(n, 0))}
     </aside>
   );
 }
