@@ -25,6 +25,30 @@
   margin: 12px 0 8px;
 }
 
+/* Botones de acciones del sidebar (crear/borrar) */
+.sidebarTools{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+
+.toolBtn{
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.toolBtn:hover{ background:#f7f7f7; }
+
+.toolBtnDisabled{
+  opacity: .45;
+  cursor: not-allowed;
+}
+
 /* Árbol de categorías (estilo "explorador") */
 .tree{
   display:flex;
@@ -85,6 +109,54 @@
 .treeIcon{ color: var(--treeInk); display:flex; }
 .treeFolder{ width: 22px; height: 22px; }
 
+/* ===== Entries (post-its) dentro del árbol ===== */
+
+.treeEntryGroup{
+  display:flex;
+  flex-direction:column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.treeRowEntry{
+  background: rgba(255, 234, 114, 0.35);
+  border-color: rgba(0,0,0,0.06);
+}
+
+.treeRowEntry:hover{
+  background: rgba(255, 234, 114, 0.48);
+  border-color: rgba(0,0,0,0.10);
+}
+
+.treeRowEntryActive{
+  background: rgba(255, 234, 114, 0.60);
+  border-color: rgba(0,0,0,0.18);
+}
+
+.treeEntryIcon{ color: var(--treeInk); display:flex; }
+.treeNote{ width: 18px; height: 18px; }
+
+/* Quita el estilo nativo gris del <button> */
+.treeEntryBtn{
+  flex:1;
+  border:none;
+  background: transparent;
+  padding: 0;
+  text-align:left;
+  cursor:pointer;
+
+  display:flex;
+  flex-direction:column;
+  gap: 1px;
+
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 0;
+}
+
+.treeEntryName{ font-weight: 800; line-height: 1.05; }
+.treeEntryUser{ font-size: 12px; color: rgba(0,0,0,0.65); line-height: 1.05; }
+
 .treeLabelBtn{
   flex:1;
   border:none;
@@ -101,6 +173,24 @@
 
 .page {
   padding: 16px;
+
+  /* Fondo “madera” (solo CSS, sin imágenes) para que la libreta resalte */
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0.0)),
+    repeating-linear-gradient(
+      90deg,
+      #d1a26f 0px,
+      #d1a26f 26px,
+      #c6905f 26px,
+      #c6905f 52px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.06) 0px,
+      rgba(255,255,255,0.06) 2px,
+      rgba(0,0,0,0.05) 2px,
+      rgba(0,0,0,0.05) 4px
+    );
 }
 
 .header {
@@ -244,6 +334,57 @@
   z-index:999;
 }
 
+/* Modal pequeñito (crear carpeta/post-it) */
+.miniModal{
+  width: min(520px, 96vw);
+  border-radius: 18px;
+  border: 1px solid #ddd;
+  background: #ffffff;
+  box-shadow: 0 30px 80px rgba(0,0,0,.25);
+  overflow:hidden;
+}
+
+.miniModalHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+
+.miniModalTitle{ font-weight: 900; }
+
+.miniModalBody{
+  padding: 12px 14px 6px;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.miniModalFooter{
+  padding: 10px 14px 14px;
+  display:flex;
+  justify-content:flex-end;
+  gap: 10px;
+}
+
+.field{ display:flex; flex-direction:column; gap: 6px; }
+.fieldLabel{ font-size: 12px; color:#666; text-transform: uppercase; letter-spacing: .08em; }
+.fieldInput, .fieldTextarea{
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+  background: #fff;
+}
+
+.btn.btnPrimary{
+  border-color:#bdbdbd;
+  background:#f2f2f2;
+}
+
 /* En el modal, necesitamos un stacking-context propio para poder usar z-index negativos
    sin que se vayan "detrás" del overlay entero. */
 .notebookStack{
@@ -293,6 +434,12 @@
   padding:12px 14px;
   border-bottom:1px solid #eee;
   background:#fafafa;
+}
+
+.notebookHeaderActions{
+  display:flex;
+  gap: 10px;
+  align-items:center;
 }
 
 .notebookTitle{ font-weight:900; }
@@ -407,6 +554,7 @@
 
 /* Post-it tipo pestaña */
 .edgePostit{
+  position: relative;
   width: 190px;
   text-align:left;
   padding: 12px 12px 14px;

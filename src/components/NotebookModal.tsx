@@ -8,6 +8,8 @@ type Props = {
   selectedEntryId: string | null;
   onSelectEntry: (id: string) => void;
   onClose: () => void;
+  onDeleteEntry: (id: string) => void;
+  onCreateEntryInCategory: (categoryId: string) => void;
 };
 
 export function NotebookModal({
@@ -16,6 +18,8 @@ export function NotebookModal({
   selectedEntryId,
   onSelectEntry,
   onClose,
+  onDeleteEntry,
+  onCreateEntryInCategory,
 }: Props) {
   const [reveal, setReveal] = useState(false);
 
@@ -72,9 +76,29 @@ export function NotebookModal({
         <div className="notebook">
           <div className="notebookHeader">
             <div className="notebookTitle">📓 {entry.name}</div>
-            <button className="iconBtn" onClick={onClose} aria-label="Cerrar">
-              ✕
-            </button>
+            <div className="notebookHeaderActions">
+              <button
+                className="iconBtn"
+                type="button"
+                onClick={() => onCreateEntryInCategory(entry.categoryId)}
+                aria-label="Nuevo post-it"
+                title="Nuevo post-it"
+              >
+                ＋
+              </button>
+              <button
+                className="iconBtn"
+                type="button"
+                onClick={() => onDeleteEntry(entry.id)}
+                aria-label="Borrar post-it"
+                title="Borrar post-it"
+              >
+                🗑
+              </button>
+              <button className="iconBtn" type="button" onClick={onClose} aria-label="Cerrar" title="Cerrar">
+                ✕
+              </button>
+            </div>
           </div>
 
           <div className="notebookPages">

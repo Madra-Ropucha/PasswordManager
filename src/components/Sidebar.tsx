@@ -8,6 +8,10 @@ type Props = {
   selectedEntryId: string | null;
   onSelectCategory: (id: string) => void;
   onSelectEntry: (entryId: string, categoryId: string) => void;
+  onCreateCategory: () => void;
+  onCreateEntry: () => void;
+  onDeleteCategory: () => void;
+  onDeleteEntry: () => void;
 };
 
 type TreeNode = Category & { children: TreeNode[] };
@@ -141,6 +145,10 @@ export function Sidebar({
   selectedEntryId,
   onSelectCategory,
   onSelectEntry,
+  onCreateCategory,
+  onCreateEntry,
+  onDeleteCategory,
+  onDeleteEntry,
 }: Props) {
   const tree = useMemo(() => buildTree(categories), [categories]);
   const byCat = useMemo(() => entriesByCategory(entries), [entries]);
@@ -264,6 +272,27 @@ export function Sidebar({
   return (
     <aside className="sidebar">
       <div className="brand">📓 Libreta</div>
+
+      <div className="sidebarTools" aria-label="Acciones">
+        <button className="toolBtn" type="button" onClick={onCreateCategory} title="Nueva carpeta">
+          ＋ Carpeta
+        </button>
+        <button className="toolBtn" type="button" onClick={onCreateEntry} title="Nuevo post-it">
+          ＋ Post-it
+        </button>
+        <button className="toolBtn" type="button" onClick={onDeleteCategory} title="Borrar carpeta">
+          🗑 Carpeta
+        </button>
+        <button
+          className={"toolBtn " + (!selectedEntryId ? "toolBtnDisabled" : "")}
+          type="button"
+          onClick={onDeleteEntry}
+          disabled={!selectedEntryId}
+          title={selectedEntryId ? "Borrar post-it" : "Selecciona un post-it para borrarlo"}
+        >
+          🗑 Post-it
+        </button>
+      </div>
 
       <div className="sectionTitle">Categorías</div>
       <div className="tree" role="tree" aria-label="Categorías">
