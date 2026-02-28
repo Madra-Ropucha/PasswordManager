@@ -4,15 +4,21 @@ type Props = {
   entry: Entry;
   onOpen: (id: string) => void;
   variant?: "grid" | "tab";
-   active?: boolean; 
+  active?: boolean;
 };
 
-export function PostItCard({ entry, onOpen, variant = "grid" }: Props) {
+export function PostItCard({ entry, onOpen, variant = "grid", active }: Props) {
   const tilt = tiltFromId(entry.id);
 
-  const className = variant === "tab" ? "edgePostit" : "postit";
-  const style = {  };
+  const className =
+    variant === "tab"
+      ? `edgePostit ${active ? "edgePostitActive" : ""}`.trim()
+      : "postit";
 
+  // En la grid sí queda bien el efecto "post-it" con un poco de inclinación.
+  // (En pestañas lo manejamos con CSS para no pelear con z-index.)
+  const style =
+    variant === "grid" ? ({ transform: `rotate(${tilt}deg)` } as const) : undefined;
 
   return (
     <button className={className} style={style} onClick={() => onOpen(entry.id)} title={entry.name}>

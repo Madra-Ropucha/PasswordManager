@@ -1,16 +1,25 @@
 import type { Category, Entry } from "../models/types";
 
 export const seedCategories: Category[] = [
+  // Puedes crear subcategorías usando `parentId`
   { id: "uni", name: "Uni" },
+  { id: "udc", name: "UDC", parentId: "uni" },
+  { id: "biblio", name: "Biblioteca", parentId: "uni" },
+
   { id: "trabajo", name: "Trabajo" },
+  { id: "dev", name: "Dev", parentId: "trabajo" },
+  { id: "infra", name: "Infra", parentId: "trabajo" },
+
   { id: "juegos", name: "Juegos" },
+  { id: "juegos_pc", name: "PC", parentId: "juegos" },
+  { id: "juegos_consola", name: "Consola", parentId: "juegos" },
 ];
 
 export const seedEntries: Entry[] = [
   // UNI
   {
     id: "u1",
-    categoryId: "uni",
+    categoryId: "udc",
     name: "Campus UDC",
     username: "usuario@udc.es",
     password: "********",
@@ -19,7 +28,7 @@ export const seedEntries: Entry[] = [
   },
   {
     id: "u2",
-    categoryId: "uni",
+    categoryId: "udc",
     name: "Moodle",
     username: "usuario@udc.es",
     password: "********",
@@ -27,7 +36,7 @@ export const seedEntries: Entry[] = [
   },
   {
     id: "u3",
-    categoryId: "uni",
+    categoryId: "udc",
     name: "Correo UDC",
     username: "usuario@udc.es",
     password: "********",
@@ -37,7 +46,7 @@ export const seedEntries: Entry[] = [
   // TRABAJO
   {
     id: "t1",
-    categoryId: "trabajo",
+    categoryId: "dev",
     name: "GitHub",
     username: "Nercy",
     password: "********",
@@ -48,7 +57,7 @@ export const seedEntries: Entry[] = [
   },
   {
     id: "t2",
-    categoryId: "trabajo",
+    categoryId: "dev",
     name: "Notion",
     username: "nercy@mail.com",
     password: "********",
@@ -59,7 +68,7 @@ export const seedEntries: Entry[] = [
   // JUEGOS
   {
     id: "j1",
-    categoryId: "juegos",
+    categoryId: "juegos_pc",
     name: "Riot",
     username: "mainGwen",
     password: "********",
@@ -67,7 +76,7 @@ export const seedEntries: Entry[] = [
   },
   {
     id: "j2",
-    categoryId: "juegos",
+    categoryId: "juegos_pc",
     name: "Steam",
     username: "nercy_steam",
     password: "********",
@@ -75,7 +84,7 @@ export const seedEntries: Entry[] = [
   },
   {
     id: "j3",
-    categoryId: "juegos",
+    categoryId: "juegos_pc",
     name: "Epic Games",
     username: "nercy_epic",
     password: "********",

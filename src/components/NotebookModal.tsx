@@ -49,16 +49,15 @@ export function NotebookModal({
 
   return (
     <div className="modalOverlay" onMouseDown={onClose}>
-      <div className="notebook" onMouseDown={(e) => e.stopPropagation()}>
-        <div className="notebookHeader">
-          <div className="notebookTitle">📓 {entry.name}</div>
-          <button className="iconBtn" onClick={onClose} aria-label="Cerrar">
-            ✕
-          </button>
-        </div>
-
-        {/* Post-its sobresaliendo dentro del modal */}
-        <div className="modalTabsEdge">
+      {/*
+        Importante: las pestañas van como HERMANOS de la libreta.
+        Así podemos poner capas (z-index) como pedías:
+          - post-it activo:  1
+          - libreta:         0
+          - post-its no act.: -1
+      */}
+      <div className="notebookStack" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="modalTabsEdge" aria-label="Pestañas">
           {entriesInCategory.map((e) => (
             <PostItCard
               key={e.id}
@@ -70,33 +69,44 @@ export function NotebookModal({
           ))}
         </div>
 
-        <div className="notebookPages">
-          <div className="notebookPage">
-            <KV k="Servicio" v={entry.name} />
-            <KV k="Usuario" v={entry.username} />
-            <KV k="URL" v={entry.url ?? "—"} />
-            <KV k="Actualizado" v={updatedText} />
+        <div className="notebook">
+          <div className="notebookHeader">
+            <div className="notebookTitle">📓 {entry.name}</div>
+            <button className="iconBtn" onClick={onClose} aria-label="Cerrar">
+              ✕
+            </button>
           </div>
 
-          <div className="notebookPage">
-            <div className="kv">
-              <div className="k">Contraseña</div>
-              <div className="v mono">{reveal ? entry.password : "••••••••••••"}</div>
+          <div className="notebookPages">
+            <div className="notebookPage">
+              <KV k="Servicio" v={entry.name} />
+              <KV k="Usuario" v={entry.username} />
+              <KV k="URL" v={entry.url ?? "—"} />
+              <KV k="Actualizado" v={updatedText} />
             </div>
 
-            <div className="btnRow">
-              <button
-                className="btn"
-                onPointerDown={() => setReveal(true)}
-                onPointerUp={() => setReveal(false)}
-                onPointerLeave={() => setReveal(false)}
-                onPointerCancel={() => setReveal(false)}
-              >
-                Mantener para ver
-              </button>
-            </div>
+            <div className="notebookPage">
+              <div className="kv">
+                <div className="k">Contraseña</div>
+                <div className="v mono">
+                  {reveal ? entry.password : "••••••••••••"}
+                </div>
+              </div>
 
-            <KV k="Notas" v={entry.notes ?? "—"} />
+              <div className="btnRow">
+                <button
+                  className="btn"
+                  onPointerDown={() => setReveal(true)}
+                  onPointerUp={() => setReveal(false)}
+                  onPointerLeave={() => setReveal(false)}
+                  onPointerCancel={() => setReveal(false)}
+                >
+                  Mantener para ver
+                </button>
+              </div>
+
+              <KV k="Notas" v={entry.notes ?? "—"} />
+            </div>
           </div>
         </div>
       </div>

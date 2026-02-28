@@ -25,25 +25,78 @@
   margin: 12px 0 8px;
 }
 
-.tabs {
-  display: flex;
-  flex-direction: column;
+/* Árbol de categorías (estilo "explorador") */
+.tree{
+  display:flex;
+  flex-direction:column;
+  gap: 4px;
+  margin-top: 2px;
+  --treeInk: #0b1b3b;
+}
+
+.treeRow{
+  display:flex;
+  align-items:center;
   gap: 8px;
-}
-
-.tab {
-  text-align: left;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 12px;
-  border: 1px solid #ddd;
-  background: white;
-  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
 }
 
-.tabActive {
-  border-color: #999;
-  background: #f2f2f2;
-  font-weight: 700;
+.treeRow:hover{
+  background:#ffffff;
+  border-color:#e6e6e6;
+}
+
+.treeRowActive{
+  background:#f2f2f2;
+  border-color:#bdbdbd;
+}
+
+.treeCaretBtn{
+  width: 26px;
+  height: 26px;
+  border:none;
+  background:transparent;
+  padding:0;
+  border-radius: 10px;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  color: var(--treeInk);
+}
+
+.treeCaretBtn:hover{ background:#f0f0f0; }
+
+.treeCaretSpacer{
+  width: 26px;
+  height: 26px;
+}
+
+.treeChevron{
+  width: 18px;
+  height: 18px;
+  transition: transform .12s ease;
+}
+
+.treeChevronOpen{ transform: rotate(90deg); }
+
+.treeIcon{ color: var(--treeInk); display:flex; }
+.treeFolder{ width: 22px; height: 22px; }
+
+.treeLabelBtn{
+  flex:1;
+  border:none;
+  background:transparent;
+  padding: 0;
+  text-align:left;
+  font: inherit;
+  cursor:pointer;
+}
+
+.treeChildren{
+  margin-top: 2px;
 }
 
 .page {
@@ -191,13 +244,46 @@
   z-index:999;
 }
 
-.notebook{
+/* En el modal, necesitamos un stacking-context propio para poder usar z-index negativos
+   sin que se vayan "detrás" del overlay entero. */
+.notebookStack{
+  position: relative;
   width:min(980px, 96vw);
+  isolation: isolate; /* crea stacking context */
+}
+
+.notebook{
+  position: relative;
+  z-index: 0; /* capa 0 (libreta) */
+  width:100%;
   border-radius:18px;
   background:#ffffff;
   border:1px solid #ddd;
   box-shadow:0 30px 80px rgba(0,0,0,.25);
   overflow:hidden;
+}
+
+/* Post-its en la parte superior del modal, como pestañas de una libreta */
+.modalTabsEdge{
+  position:absolute;
+  left: 18px;
+  right: 18px;
+  top: -34px;         /* sobresalen */
+  display:flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+/* Capas: activo encima, libreta en medio, inactivos por detrás */
+.modalTabsEdge .edgePostit{
+  position: relative;
+  z-index: -1; /* capa -1 (inactivos) */
+}
+
+.modalTabsEdge .edgePostitActive{
+  z-index: 1;          /* capa 1 (activo) */
+  transform: translateY(18px);
 }
 
 .notebookHeader{
@@ -233,7 +319,8 @@
       to bottom,
       #ffffff,
       #ffffff 22px,
-      #f5f5f5 23px
+      #ededed 22px,
+      #ededed 24px
     );
 }
 
@@ -300,7 +387,8 @@
     to bottom,
     #ffffff,
     #ffffff 22px,
-    #f5f5f5 23px
+    #ededed 22px,
+    #ededed 24px
   );
 }
 
@@ -328,8 +416,19 @@
   background: #fff6a8;
   box-shadow: 0 10px 18px rgba(0,0,0,.10);
   cursor:pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.edgePostit::after{
+  content:"";
+  position:absolute;
+  right:0; top:0;
+  width:26px; height:26px;
+  background:linear-gradient(135deg, rgba(255,255,255,.85), rgba(0,0,0,.06));
+  clip-path:polygon(0 0, 100% 0, 100% 100%);
+  border-top-right-radius:14px;
 }
 
 .edgePostit:hover{
-  transform: rotate(0deg) scale(1.02);
+  box-shadow: 0 14px 26px rgba(0,0,0,.14);
 }

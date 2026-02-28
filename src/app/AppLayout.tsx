@@ -10,7 +10,13 @@ export function AppLayout() {
   const [categories] = useState(seedCategories);
   const [entries] = useState(seedEntries);
 
-  const [activeCategoryId, setActiveCategoryId] = useState(categories[0].id);
+  // Elige como categoría inicial la primera que tenga entradas
+  const initialActiveCategoryId = (() => {
+    const idsWithEntries = new Set(seedEntries.map((e) => e.categoryId));
+    return seedCategories.find((c) => idsWithEntries.has(c.id))?.id ?? seedCategories[0].id;
+  })();
+
+  const [activeCategoryId, setActiveCategoryId] = useState(initialActiveCategoryId);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
@@ -45,10 +51,16 @@ export function AppLayout() {
     <div className="app">
       <Sidebar
         categories={categories}
+        entries={entries}
         activeCategoryId={activeCategoryId}
+        selectedEntryId={selectedEntryId}
         onSelectCategory={(id) => {
           setActiveCategoryId(id);
           setSelectedEntryId(null);
+        }}
+        onSelectEntry={(entryId, categoryId) => {
+          setActiveCategoryId(categoryId);
+          setSelectedEntryId(entryId);
         }}
       />
 
