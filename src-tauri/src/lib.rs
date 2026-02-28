@@ -18,6 +18,11 @@ fn decrypt(path: &str, password: &str) -> Result<Vec<u8>, String> {
     crypto::decrypt_file(path, &key)
 }
 
+#[tauri::command]
+fn hash_password(password: &str) -> String {
+    crypto::hash_password(password)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -35,7 +40,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, encrypt, decrypt])
+        .invoke_handler(tauri::generate_handler![greet, encrypt, decrypt, hash_password])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
