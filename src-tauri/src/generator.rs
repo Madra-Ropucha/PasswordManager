@@ -6,7 +6,7 @@ const LOWERCASE: &[u8] = b"abcdefghijklmnopqrstuvwxyz";
 const UPPERCASE: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const NUMBERS: &[u8] = b"0123456789";
 const SYMBOLS: &[u8] = b"!@#$%^&*()-_=+[]{}<>?";
-
+ 
 
 fn build_charset(options: &PasswordOptions) -> String {
     let mut charset = String::new();
@@ -67,6 +67,3 @@ pub fn generate_password(options: &PasswordOptions) -> Result<String, String> {
 
     Ok(String::from_utf8(password).unwrap())
 }
-
-
-
