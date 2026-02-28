@@ -29,15 +29,15 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             use tauri::Manager;
-
+                
             let app_dir = app.path().app_data_dir().expect("could not get app dir");
-            std::fs::create_dir_all(&app_dir).expect("could not create dir");
-
-            let db_path = app_dir.join("passwords.db");
-            if !db_path.exists() {
-                File::create(&db_path).expect("could not create db file");
+                
+            let vaults_dir = app_dir.join("vaults");
+                
+            if !vaults_dir.exists() {
+                std::fs::create_dir(&vaults_dir).expect("could not create vaults directory");
             }
-
+        
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![greet, encrypt, decrypt, hash_password])
