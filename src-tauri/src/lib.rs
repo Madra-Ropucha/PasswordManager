@@ -1,3 +1,4 @@
+use std::sync::Mutex;
 use std::fs::File;
 mod crypto;
 mod db;
@@ -104,7 +105,7 @@ pub fn run() {
             if !vaults_dir.exists() {
                 std::fs::create_dir(&vaults_dir).expect("could not create vaults directory");
             }
-        
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
