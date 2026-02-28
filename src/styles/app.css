@@ -201,6 +201,29 @@ body {
   margin-bottom: 12px;
 }
 
+.headerRow{
+  display:flex;
+  gap: 12px;
+  align-items:center;
+  justify-content: space-between;
+}
+
+.headerUser{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-shrink: 0;
+}
+
+.headerUserName{
+  font-size: 13px;
+  color:#444;
+  max-width: 220px;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .search {
   width: 100%;
   max-width: 520px;
@@ -389,6 +412,49 @@ body {
   background:#f2f2f2;
 }
 
+
+/* Portada de la libreta (vista de selección) */
+.notebookCoverPage{
+  position:absolute;
+  left: 126px;
+  right: 56px;          /* deja hueco para los tabs (si están a la derecha) */
+  top: 72px;
+  bottom: 16px;
+
+  border-radius: 16px;
+  border: 1px solid #e3d7c2;
+
+  /* look “portada” */
+  background: linear-gradient(180deg, #f3e3c7, #efe6d6);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
+
+  z-index: 1;
+}
+
+/* Título grande centrado */
+.notebookCoverPageTitle{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap: 10px;
+
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-size: 28px;
+  color: #2b1a0c;
+}
+
+/* Subtítulo opcional */
+.notebookCoverPageSub{
+  font-size: 12px;
+  letter-spacing: .18em;
+  color: rgba(43,26,12,.65);
+}
+
 /* En el modal, necesitamos un stacking-context propio para poder usar z-index negativos
    sin que se vayan "detrás" del overlay entero. */
 .notebookStack{
@@ -500,6 +566,67 @@ body {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
+/* ===== Auth (Login / Sign up) ===== */
+
+.authPage{
+  min-height: 100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 24px;
+  background: linear-gradient(180deg, #f7f7f7, #ffffff);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.authCard{
+  width: min(520px, 96vw);
+  border-radius: 18px;
+  border: 1px solid #ddd;
+  background: #ffffff;
+  box-shadow: 0 30px 80px rgba(0,0,0,.16);
+  padding: 16px 16px 14px;
+}
+
+.authBrand{
+  font-size: 20px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.authTitle{
+  font-size: 16px;
+  font-weight: 800;
+  margin: 4px 0 12px;
+}
+
+.authForm{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.authActions{
+  display:flex;
+  justify-content:flex-end;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.authError{
+  border: 1px solid #f1c3c3;
+  background: #fff2f2;
+  color: #7d1b1b;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.authFootnote{
+  margin-top: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
 /* Libreta (vista principal) */
 .notebookPreview{
   position: relative;
@@ -547,11 +674,12 @@ body {
 .tabsEdge{
   position:absolute;
   top: 86px;
-  right: -26px;   /* sobresale */
+  left: -26px;   /* sobresale */
   display:flex;
   flex-direction:column;
   gap: 12px;
-  padding-right: 26px; /* para que no corte el scroll */
+  padding-left: 26px; /* para que no corte el scroll */
+  padding-right: 0px; /* para que no corte el scroll */
   max-height: calc(100% - 110px);
   overflow:auto;
 }

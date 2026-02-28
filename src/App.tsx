@@ -1,6 +1,6 @@
-import { AppLayout } from "./app/AppLayout";
 import "./styles/app.css";
+import { AuthGate } from "./auth/AuthGate";
 
 export default function App() {
-  return <AppLayout />;
+  return <AuthGate />;
 }

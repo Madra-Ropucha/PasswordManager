@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { seedCategories, seedEntries } from "../data/seed";
-import type { Entry } from "../models/types";
+import type { Category, Entry } from "../models/types";
 import { Sidebar } from "../components/Sidebar";
 import { SearchBar } from "../components/SearchBar";
 import { EntryGrid } from "../components/EntryGrid";
 import { NotebookModal } from "../components/NotebookModal";
 import { CreateItemModal, type CreateItemState } from "../components/CreateItemModal";
 
-const LS_CATEGORIES = "notebook_categories_v1";
-const LS_ENTRIES = "notebook_entries_v1";
+const LS_CATEGORIES_LEGACY = "notebook_categories_v1";
+const LS_ENTRIES_LEGACY = "notebook_entries_v1";
+
+const defaultCategories: Category[] = [{ id: "general", name: "General" }];
+const defaultEntries: Entry[] = [];
 
 function safeLoad<T>(key: string): T | null {
   try {
@@ -54,15 +56,60 @@ function collectDescendants(categories: { id: string; parentId?: string }[], roo
   return out;
 }
 
-export function AppLayout() {
-  const [categories, setCategories] = useState(() => safeLoad<typeof seedCategories>(LS_CATEGORIES) ?? seedCategories);
-  const [entries, setEntries] = useState(() => safeLoad<typeof seedEntries>(LS_ENTRIES) ?? seedEntries);
+type Props = {
+  userId: string;
+  userName: string;
+  onLogout: () => void;
+};
+
+function userCatsKey(userId: string) {
+  return `notebook_categories_v1_${userId}`;
+}
+
+function userEntriesKey(userId: string) {
+  return `notebook_entries_v1_${userId}`;
+}
+
+function bootstrapUserData(userId: string): { categories: Category[]; entries: Entry[] } {
+  const catsKey = userCatsKey(userId);
+  const entriesKey = userEntriesKey(userId);
+
+  let categories = safeLoad<Category[]>(catsKey);
+  let entries = safeLoad<Entry[]>(entriesKey);
+
+  // Migración suave desde la versión sin usuarios (si el usuario aún no tiene datos)
+  if (!categories) {
+    const legacyCats = safeLoad<Category[]>(LS_CATEGORIES_LEGACY);
+    if (legacyCats && legacyCats.length > 0) {
+      categories = legacyCats;
+      safeSave(catsKey, categories);
+    }
+  }
+  if (!entries) {
+    const legacyEntries = safeLoad<Entry[]>(LS_ENTRIES_LEGACY);
+    if (legacyEntries && legacyEntries.length >= 0) {
+      entries = legacyEntries;
+      safeSave(entriesKey, entries);
+    }
+  }
+
+  // Si sigue sin haber nada, inicializamos limpio
+  if (!categories || categories.length === 0) categories = defaultCategories;
+  if (!entries) entries = defaultEntries;
+
+  return { categories, entries };
+}
+
+export function AppLayout({ userId, userName, onLogout }: Props) {
+  const boot = useMemo(() => bootstrapUserData(userId), [userId]);
+
+  const [categories, setCategories] = useState<Category[]>(boot.categories);
+  const [entries, setEntries] = useState<Entry[]>(boot.entries);
 
   // Elige como categoría inicial la primera que tenga entradas (o la primera disponible)
   const [activeCategoryId, setActiveCategoryId] = useState(() => {
-    const idsWithEntries = new Set((safeLoad<typeof seedEntries>(LS_ENTRIES) ?? seedEntries).map((e) => e.categoryId));
-    const cats = safeLoad<typeof seedCategories>(LS_CATEGORIES) ?? seedCategories;
-    return cats.find((c) => idsWithEntries.has(c.id))?.id ?? cats[0].id;
+    const idsWithEntries = new Set(boot.entries.map((e) => e.categoryId));
+    return boot.categories.find((c) => idsWithEntries.has(c.id))?.id ?? boot.categories[0].id;
   });
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -71,12 +118,12 @@ export function AppLayout() {
 
   // Persistencia local (para que no se pierda al recargar)
   useEffect(() => {
-    safeSave(LS_CATEGORIES, categories);
-  }, [categories]);
+    safeSave(userCatsKey(userId), categories);
+  }, [categories, userId]);
 
   useEffect(() => {
-    safeSave(LS_ENTRIES, entries);
-  }, [entries]);
+    safeSave(userEntriesKey(userId), entries);
+  }, [entries, userId]);
 
   // Todas las entradas de la categoría activa (para las pestañas del modal)
   const entriesInCategory = useMemo(() => {
@@ -208,7 +255,17 @@ export function AppLayout() {
 
       <main className="page">
         <div className="header">
-          <SearchBar value={search} onChange={setSearch} />
+          <div className="headerRow">
+            <SearchBar value={search} onChange={setSearch} />
+            <div className="headerUser">
+              <span className="headerUserName" title={userName}>
+                👤 {userName}
+              </span>
+              <button className="btn" type="button" onClick={onLogout}>
+                Salir
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="content">

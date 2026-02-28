@@ -15,7 +15,12 @@ export function EntryGrid({ notebookTitle, entries, onOpenEntry }: Props) {
         <div className="notebookCoverHint">Post-its (click para abrir)</div>
       </div>
 
-      <div className="notebookSheet" />
+      <div className="notebookCoverPage">
+  <div className="notebookCoverPageTitle">
+    <div>PASSWORDS</div>
+    <div className="notebookCoverPageSub">your vault</div>
+  </div>
+</div>
 
       <div className="tabsEdge">
         {entries.map((e) => (

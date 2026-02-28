@@ -17,3 +17,11 @@ export type Entry = {
   updatedAt: number;
   deletedAt?: number;
 };
+
+export type User = {
+  id: string;
+  username: string;
+  /** Demo local: por simplicidad se guarda en claro (NO es seguro). */
+  password: string;
+  createdAt: number;
+};
