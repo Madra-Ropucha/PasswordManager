@@ -394,7 +394,7 @@ fn cmd_delete_password(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+   tauri::Builder::default()
     .plugin(tauri_plugin_opener::init())
     .setup(|app| {
         use tauri::Manager;
@@ -405,7 +405,7 @@ pub fn run() {
         .manage(VaultState(Mutex::new(None)))
         .setup(|app| {
             use tauri::Manager;
-            let app_dir = app.path().app_data_dir().expect("could not get app dir");
+        let app_dir = app.path().app_data_dir().expect("could not get app dir");
 
         let vaults_dir = app_dir.join("vaults");
 
