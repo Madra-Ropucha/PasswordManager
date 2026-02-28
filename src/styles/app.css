@@ -1,0 +1,335 @@
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: 100vh;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.sidebar {
+  padding: 16px;
+  border-right: 1px solid #ddd;
+  background: #fafafa;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #666;
+  margin: 12px 0 8px;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tab {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+}
+
+.tabActive {
+  border-color: #999;
+  background: #f2f2f2;
+  font-weight: 700;
+}
+
+.page {
+  padding: 16px;
+}
+
+.header {
+  margin-bottom: 12px;
+}
+
+.search {
+  width: 100%;
+  max-width: 520px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  outline: none;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  height: calc(100vh - 80px);
+}
+
+.panel {
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  background: white;
+  padding: 12px;
+  overflow: auto;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  text-align: left;
+  border: 1px solid #eee;
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.rowActive {
+  border-color: #999;
+  background: #f7f7f7;
+}
+
+.rowTitle {
+  font-weight: 700;
+}
+
+.rowSub {
+  font-size: 12px;
+  color: #666;
+}
+
+.empty {
+  color: #666;
+  padding: 12px 4px;
+}
+
+.card {
+  border: 1px dashed #ddd;
+  border-radius: 14px;
+  padding: 12px;
+  background: #fcfcfc;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.kv:last-child {
+  border-bottom: none;
+}
+
+.k {
+  color: #666;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.v {
+  font-weight: 600;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:14px;
+  padding:6px;
+}
+
+.postit{
+  position:relative;
+  text-align:left;
+  padding:14px 14px 18px;
+  border-radius:14px;
+  border:1px solid #e9e2a8;
+  border-top:6px solid #f2d34b;
+  background:#fff6a8;
+  box-shadow:0 10px 18px rgba(0,0,0,.08);
+  cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+
+.postit:hover{
+  /* transform:rotate(0deg) scale(1.02); */
+  box-shadow:0 14px 26px rgba(0,0,0,.12);
+}
+
+.postit::after{
+  content:"";
+  position:absolute;
+  right:0; top:0;
+  width:26px; height:26px;
+  background:linear-gradient(135deg, rgba(255,255,255,.8), rgba(0,0,0,.06));
+  clip-path:polygon(0 0, 100% 0, 100% 100%);
+  border-top-right-radius:14px;
+}
+
+.postitTitle{ font-weight:800; margin-bottom:6px; }
+.postitUser{ font-size:12px; color:#444; opacity:.9; }
+.postitStar{ position:absolute; left:10px; bottom:10px; font-size:14px; }
+
+.modalOverlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index:999;
+}
+
+.notebook{
+  width:min(980px, 96vw);
+  border-radius:18px;
+  background:#ffffff;
+  border:1px solid #ddd;
+  box-shadow:0 30px 80px rgba(0,0,0,.25);
+  overflow:hidden;
+}
+
+.notebookHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 14px;
+  border-bottom:1px solid #eee;
+  background:#fafafa;
+}
+
+.notebookTitle{ font-weight:900; }
+
+.iconBtn{
+  border:1px solid #ddd;
+  background:white;
+  border-radius:12px;
+  padding:6px 10px;
+  cursor:pointer;
+}
+
+.notebookPages{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+}
+
+.notebookPage{
+  padding:14px;
+  min-height:320px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #ffffff,
+      #ffffff 22px,
+      #f5f5f5 23px
+    );
+}
+
+.notebookPage:first-child{
+  border-right:1px solid #eee;
+}
+
+.btnRow{
+  display:flex;
+  gap:10px;
+  margin:10px 0 6px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  border:1px solid #ddd;
+  background:white;
+  border-radius:12px;
+  padding:8px 10px;
+  cursor:pointer;
+  text-decoration:none;
+  color:inherit;
+}
+
+.mono{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+/* Libreta (vista principal) */
+.notebookPreview{
+  position: relative;
+  height: 100%;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #f7f7f7, #ffffff);
+  overflow: visible; /* CLAVE para que sobresalgan los post-its */
+}
+
+.notebookCover{
+  padding: 18px 18px 10px;
+}
+
+.notebookCoverTitle{
+  font-weight: 900;
+  font-size: 18px;
+}
+
+.notebookCoverHint{
+  color:#666;
+  font-size:12px;
+  margin-top:6px;
+}
+
+/* Hoja interior (solo para dar sensación de libreta) */
+.notebookSheet{
+  position:absolute;
+  left: 16px;
+  right: 56px; /* deja sitio para los tabs */
+  top: 72px;
+  bottom: 16px;
+  border-radius: 16px;
+  border: 1px solid #eee;
+  background: repeating-linear-gradient(
+    to bottom,
+    #ffffff,
+    #ffffff 22px,
+    #f5f5f5 23px
+  );
+}
+
+/* Columna de post-its sobresaliendo */
+.tabsEdge{
+  position:absolute;
+  top: 86px;
+  right: -26px;   /* sobresale */
+  display:flex;
+  flex-direction:column;
+  gap: 12px;
+  padding-right: 26px; /* para que no corte el scroll */
+  max-height: calc(100% - 110px);
+  overflow:auto;
+}
+
+/* Post-it tipo pestaña */
+.edgePostit{
+  width: 190px;
+  text-align:left;
+  padding: 12px 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e9e2a8;
+  border-top: 6px solid #f2d34b;
+  background: #fff6a8;
+  box-shadow: 0 10px 18px rgba(0,0,0,.10);
+  cursor:pointer;
+}
+
+.edgePostit:hover{
+  transform: rotate(0deg) scale(1.02);
+}
