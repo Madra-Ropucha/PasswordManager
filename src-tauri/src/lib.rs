@@ -2,7 +2,8 @@ use std::sync::Mutex;
 use std::fs::File;
 mod crypto;
 mod db;
-
+use breach_check::BreachChecker;
+struct BreachState(Mutex<BreachChecker>);
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
@@ -94,37 +95,70 @@ fn cmd_delete_password(state: tauri::State<DbState>, id: i64) -> Result<(), Stri
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .setup(|app| {
-            use tauri::Manager;
+    .plugin(tauri_plugin_opener::init())
+    .setup(|app| {
+        use tauri::Manager;
 
-            let app_dir = app.path().app_data_dir().expect("could not get app dir");
+        let app_dir = app.path().app_data_dir().expect("could not get app dir");
 
-            let vaults_dir = app_dir.join("vaults");
+        let vaults_dir = app_dir.join("vaults");
 
-            if !vaults_dir.exists() {
-                std::fs::create_dir(&vaults_dir).expect("could not create vaults directory");
-            }
+        if !vaults_dir.exists() {
+            std::fs::create_dir(&vaults_dir).expect("could not create vaults directory");
+        }
 
-            Ok(())
-        })
-        .invoke_handler(tauri::generate_handler![
-            greet,
-            encrypt,
-            decrypt,
-            hash_password,
-            cmd_get_root_folders,
-            cmd_get_folders_by_parent,
-            cmd_get_passwords_by_folder,
-            cmd_get_folder_by_id,
-            cmd_get_password_by_id,
-            cmd_insert_folder,
-            cmd_insert_password,
-            cmd_update_folder,
-            cmd_update_password,
-            cmd_delete_folder,
-            cmd_delete_password,
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        Ok(())
+    })
+    .invoke_handler(tauri::generate_handler![
+        greet,
+        encrypt,
+        decrypt,
+        hash_password,
+        cmd_get_root_folders,
+        cmd_get_folders_by_parent,
+        cmd_get_passwords_by_folder,
+        cmd_get_folder_by_id,
+        cmd_get_password_by_id,
+        cmd_insert_folder,
+        cmd_insert_password,
+        cmd_update_folder,
+        cmd_update_password,
+        cmd_delete_folder,
+        cmd_delete_password,
+    ])
+    .run(tauri::generate_context!())
+}
+mod generator;
+use generator::{generate_password, PasswordOptions};
+
+#[tauri::command]
+fn cmd_generate_password(
+    length: usize,
+    uppercase: bool,
+    lowercase: bool,
+    numbers: bool,
+    symbols: bool,
+) -> Result<String, String> {
+
+    let options = PasswordOptions {
+        length,
+        uppercase,
+        lowercase,
+        numbers,
+        symbols,
+    };
+
+    generate_password(&options)
+}
+#[tauri::command]
+fn cmd_check_password_breach(
+    password: &str,
+    state: tauri::State<BreachState>
+) -> Result<Option<u32>, String> {
+
+    let mut checker = state.0.lock().unwrap();
+
+    checker
+        .check_password(password)
+        .map_err(|e| e.to_string())
 }
