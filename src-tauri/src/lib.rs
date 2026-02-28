@@ -1,5 +1,6 @@
 use std::fs::File;
 mod crypto;
+mod db;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -29,11 +30,11 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             use tauri::Manager;
-                
+
             let app_dir = app.path().app_data_dir().expect("could not get app dir");
-                
+
             let vaults_dir = app_dir.join("vaults");
-                
+
             if !vaults_dir.exists() {
                 std::fs::create_dir(&vaults_dir).expect("could not create vaults directory");
             }
