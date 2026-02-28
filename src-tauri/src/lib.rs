@@ -8,6 +8,8 @@ use rusqlite::Connection;
 
 mod crypto;
 mod db;
+use breach_check::BreachChecker;
+struct BreachState(Mutex<BreachChecker>);
 
 /// Estado global de la conexión SQLite abierta (del vault ya descifrado).
 pub struct DbState(pub Mutex<Option<Connection>>);
@@ -393,6 +395,11 @@ fn cmd_delete_password(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+    .plugin(tauri_plugin_opener::init())
+    .setup(|app| {
+        use tauri::Manager;
+
+        let app_dir = app.path().app_data_dir().expect("could not get app dir");
         .plugin(tauri_plugin_opener::init())
         .manage(DbState(Mutex::new(None)))
         .manage(VaultState(Mutex::new(None)))
@@ -400,6 +407,66 @@ pub fn run() {
             use tauri::Manager;
             let app_dir = app.path().app_data_dir().expect("could not get app dir");
 
+        let vaults_dir = app_dir.join("vaults");
+
+        if !vaults_dir.exists() {
+            std::fs::create_dir(&vaults_dir).expect("could not create vaults directory");
+        }
+
+        Ok(())
+    })
+    .invoke_handler(tauri::generate_handler![
+        greet,
+        encrypt,
+        decrypt,
+        hash_password,
+        cmd_get_root_folders,
+        cmd_get_folders_by_parent,
+        cmd_get_passwords_by_folder,
+        cmd_get_folder_by_id,
+        cmd_get_password_by_id,
+        cmd_insert_folder,
+        cmd_insert_password,
+        cmd_update_folder,
+        cmd_update_password,
+        cmd_delete_folder,
+        cmd_delete_password,
+    ])
+    .run(tauri::generate_context!())
+}
+mod generator;
+use generator::{generate_password, PasswordOptions};
+
+#[tauri::command]
+fn cmd_generate_password(
+    length: usize,
+    uppercase: bool,
+    lowercase: bool,
+    numbers: bool,
+    symbols: bool,
+) -> Result<String, String> {
+
+    let options = PasswordOptions {
+        length,
+        uppercase,
+        lowercase,
+        numbers,
+        symbols,
+    };
+
+    generate_password(&options)
+}
+#[tauri::command]
+fn cmd_check_password_breach(
+    password: &str,
+    state: tauri::State<BreachState>
+) -> Result<Option<u32>, String> {
+
+    let mut checker = state.0.lock().unwrap();
+
+    checker
+        .check_password(password)
+        .map_err(|e| e.to_string())
             let vaults = app_dir.join("vaults");
             let open = vaults.join(".open");
             let tmp = vaults.join(".tmp");
